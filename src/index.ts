@@ -1,35 +1,34 @@
 /**
  * Pi Grok Build Extension
  *
- * First-class support for Grok Build in the Pi Coding Agent.
+ * First-class native support for Grok Build inside the Pi Coding Agent.
  *
- * Features:
- * - Reads authentication from ~/.grok/auth.json (with auto-refresh)
- * - Supports direct token or full auth.json via configuration
- * - Model: "grok-build"
- * - Full reasoning effort support (low, medium, high, xhigh, max)
+ * - Reads ~/.grok/auth.json automatically
+ * - Supports manual token / full auth.json via config
+ * - Automatic token refresh (basic version)
+ * - Exposes model "grok-build" with full reasoning effort support
  */
 
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { getValidGrokAccessToken } from "./grok-auth.js";
 import type { GrokBuildProviderConfig } from "./types.js";
 
-export default async function (pi: ExtensionAPI, config: GrokBuildProviderConfig = {}) {
-  console.log("[pi-grok] Initializing Grok Build provider...");
+export default async function (pi: ExtensionAPI, userConfig: GrokBuildProviderConfig = {}) {
+  console.log("[pi-grok] Loading Grok Build provider...");
 
-  // Get a valid access token (this will trigger refresh if needed)
-  const accessToken = await getValidGrokAccessToken(config);
+  const accessToken = await getValidGrokAccessToken(userConfig);
 
   if (!accessToken) {
-    console.error("[pi-grok] Failed to obtain a valid Grok access token.");
-    console.error("[pi-grok] Make sure you are logged into Grok Build, or provide accessToken/authJson in config.");
+    console.error("[pi-grok] Could not obtain a valid access token for Grok.");
+    console.error("[pi-grok] Either run Grok Build at least once to generate ~/.grok/auth.json,");
+    console.error("[pi-grok] or provide 'accessToken' / 'authJson' in the extension config.");
     return;
   }
 
-  // Register the grok-build provider
+  // Register the native grok-build provider
   pi.registerProvider("grok-build", {
     name: "Grok Build (xAI)",
-    baseUrl: config.baseUrl || "https://api.x.ai/v1",
+    baseUrl: userConfig.baseUrl ?? "https://api.x.ai/v1",
     apiKey: accessToken,
     api: "openai-completions",
     authHeader: true,
@@ -58,5 +57,6 @@ export default async function (pi: ExtensionAPI, config: GrokBuildProviderConfig
     ],
   });
 
-  console.log("[pi-grok] Successfully registered 'grok-build' provider with automatic token management.");
+  console.log("[pi-grok] Successfully registered provider 'grok-build'.");
+  console.log("[pi-grok] You can now use: /model grok-build  or  pi --model grok-build");
 }
