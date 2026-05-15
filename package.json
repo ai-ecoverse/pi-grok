@@ -2,6 +2,7 @@
   "name": "@ai-ecoverse/pi-grok",
   "version": "0.1.0",
   "description": "Grok Build provider and extension for Pi Coding Agent",
+  "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "pi": {
@@ -16,15 +17,15 @@
   "author": "Lars Trieloff",
   "license": "Apache-2.0",
   "dependencies": {
-    "@earendil-works/pi-coding-agent": "^0.1.0",
-    "@earendil-works/pi-ai": "^0.1.0"
+    "@earendil-works/pi-coding-agent": "^0.74.0",
+    "@earendil-works/pi-ai": "^0.74.0"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
     "typescript": "^5.4.0"
   },
   "peerDependencies": {
-    "@earendil-works/pi-coding-agent": ">=0.1.0",
-    "@earendil-works/pi-ai": ">=0.1.0"
+    "@earendil-works/pi-coding-agent": ">=0.74.0",
+    "@earendil-works/pi-ai": ">=0.74.0"
   }
 }
