@@ -4,6 +4,9 @@
   "description": "Grok Build provider and extension for Pi Coding Agent",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "pi": {
+    "extensions": ["./src/index.ts"]
+  },
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
