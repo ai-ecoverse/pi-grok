@@ -1,24 +1,47 @@
 # pi-grok
 
-**Native Grok Build provider** for the [Pi Coding Agent](https://pi.dev).
+**Native Grok provider** for the [Pi Coding Agent](https://pi.dev).
 
-This extension gives Pi first-class support for Grok Build by using the exact same authentication as the official Grok TUI.
+Registers a `grok-build` model that talks to the xAI Responses-style
+endpoint and also overrides auth on pi's built-in `xai` provider so the
+other Grok models (`grok-4.3`, `grok-code-fast-1`, …) reach `api.x.ai`
+with the same credentials.
 
-## Features
+## Authentication
 
-- Uses `~/.grok/auth.json` automatically (the token from running `grok`)
-- Automatic token refresh using the built-in refresh token
-- Model name: `grok-build`
-- Full reasoning effort support (`low`, `medium`, `high`, `xhigh`, `max`)
-- Multiple credential input methods (file, direct token, raw JSON)
+Two ways to authenticate, picked automatically in this order:
+
+1. **API key in the environment** — set `XAI_API_KEY` (or
+   `GROK_BUILD_API_KEY` for an override that *only* affects this
+   provider). Works with any `xai-…` API key from `console.x.ai`. This
+   is the path to use in containers, CI, slicc, or anywhere
+   `~/.grok/auth.json` is not available.
+
+2. **Grok Build CLI credentials** — `~/.grok/auth.json`, populated by
+   running the `grok` TUI once. The extension reads the OAuth tokens
+   from that file, refreshes them against `https://auth.x.ai/oauth2/token`
+   when they are within 5 min of expiry, and writes the refreshed
+   tokens back atomically so the Grok TUI stays in sync.
+
+Refresh runs lazily on every pi request (uncached `!command` resolver),
+so a long pi session can outlive the 6-hour access-token window without
+intervention.
+
+### Environment variables
+
+| Variable               | Purpose                                                      |
+|------------------------|--------------------------------------------------------------|
+| `XAI_API_KEY`          | Plain xAI API key. Used as-is, no refresh.                   |
+| `GROK_BUILD_API_KEY`   | Same as `XAI_API_KEY` but scoped to this provider only.      |
+| `XAI_BASE_URL`         | Override `https://api.x.ai/v1` (e.g. for a proxy).           |
+| `PI_GROK_AUTH_FILE`    | Alternate path to a `grok` auth.json.                        |
+| `PI_GROK_CLIENT_ID`    | Alternate OAuth client id for the refresh request.           |
 
 ## Installation
 
 ```bash
 # Load the extension
 pi -e ~/Developer/ai-ecoverse/pi-grok
-
-# Or add it permanently in your Pi config
 ```
 
 ## Usage
@@ -31,57 +54,9 @@ pi --model grok-build
 /model grok-build
 ```
 
-### Reasoning Effort
-
-```bash
-pi --model grok-build --reasoning-effort high
-# or
-pi --model grok-build --reasoning-effort max
-```
-
-Supported values: `low`, `medium`, `high`, `xhigh`, `max`
-
-## Configuration Options
-
-You can pass configuration when loading the extension:
-
-```typescript
-{
-  // 1. Read from file (default)
-  authFilePath: "~/.grok/auth.json",
-
-  // 2. Provide access token directly
-  accessToken: "eyJ...",
-
-  // 3. Provide the entire auth.json contents
-  authJson: "{ ... full contents of ~/.grok/auth.json ... }",
-
-  // Optional
-  clientId: "...",
-  baseUrl: "https://api.x.ai/v1"
-}
-```
-
-## Comparison with Official xAI Provider
-
-| Feature                        | Official xAI (console.x.ai)      | `grok-build` (this extension)          |
-|--------------------------------|----------------------------------|----------------------------------------|
-| Uses `xai-...` API key         | Yes                              | Optional (fallback)                    |
-| Uses Grok Build session token  | No                               | Yes (primary)                          |
-| Automatic token refresh        | No                               | Yes                                    |
-| Access to Grok Build features  | Limited                          | Full                                   |
-| Reasoning effort               | Basic                            | Native (`low` → `max`)                 |
-| Works while using Grok TUI     | Conflicts possible               | Seamless (shares auth)                 |
-| Requires separate login        | Yes                              | No (reuses existing Grok Build login)  |
-
-## Why This Exists
-
-The official way to use Grok in Pi requires a separate API key from console.x.ai. This extension instead reuses the authentication from **Grok Build** itself — the same one you use when running the `grok` TUI.
-
-This is especially useful if you:
-- Spend most of your time in Grok Build
-- Want Pi to have access to the same models and capabilities
-- Don’t want to manage multiple sets of credentials
+`grok-build` rejects an explicit `reasoning_effort` parameter, so the
+model is registered as non-reasoning. The other xAI models reached via
+this extension keep pi's built-in reasoning behavior.
 
 ## Development
 
