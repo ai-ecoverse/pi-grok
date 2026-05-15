@@ -11,63 +11,45 @@ const DEFAULT_CLIENT_ID = 'b1a00492-073a-47ea-816f-4c329264a828';
 export interface GrokAuthTokens {
   accessToken: string;
   refreshToken: string;
-  expiresAt: number; // timestamp in ms
+  expiresAt: number;
 }
 
-/**
- * Parse the Grok auth.json structure and extract tokens.
- */
-function parseGrokAuthFile(content: string | Record<string, any>): GrokAuthTokens | null {
-  try {
-    const data = typeof content === 'string' ? JSON.parse(content) : content;
-    const entry = data[XAI_AUTH_KEY];
+function parseGrokAuthObject(data: any): GrokAuthTokens | null {
+  const entry = data?.[XAI_AUTH_KEY];
+  if (!entry?.key || !entry?.refresh_token) return null;
 
-    if (!entry || !entry.key || !entry.refresh_token) {
-      return null;
-    }
-
-    return {
-      accessToken: entry.key,
-      refreshToken: entry.refresh_token,
-      expiresAt: entry.expires_at ? new Date(entry.expires_at).getTime() : Date.now() + 6 * 60 * 60 * 1000,
-    };
-  } catch (err) {
-    console.error('[pi-grok] Failed to parse Grok auth file:', err);
-    return null;
-  }
+  return {
+    accessToken: entry.key,
+    refreshToken: entry.refresh_token,
+    expiresAt: entry.expires_at
+      ? new Date(entry.expires_at).getTime()
+      : Date.now() + 6 * 60 * 60 * 1000,
+  };
 }
 
-/**
- * Read tokens from the filesystem (default: ~/.grok/auth.json)
- */
 export function readGrokTokensFromFile(customPath?: string): GrokAuthTokens | null {
   const authPath = customPath || DEFAULT_AUTH_PATH;
-
-  if (!fs.existsSync(authPath)) {
-    return null;
-  }
+  if (!fs.existsSync(authPath)) return null;
 
   try {
     const content = fs.readFileSync(authPath, 'utf-8');
-    return parseGrokAuthFile(content);
+    return parseGrokAuthObject(JSON.parse(content));
   } catch (err) {
-    console.error('[pi-grok] Error reading Grok auth file:', err);
+    console.error('[pi-grok] Failed to read/parse Grok auth file:', err);
     return null;
   }
 }
 
-/**
- * Refresh the access token using the refresh token.
- */
-export async function refreshGrokToken(refreshToken: string, clientId?: string): Promise<GrokAuthTokens | null> {
+export async function refreshGrokToken(
+  refreshToken: string,
+  clientId?: string
+): Promise<GrokAuthTokens | null> {
   const client = clientId || DEFAULT_CLIENT_ID;
 
   try {
-    const response = await fetch(TOKEN_ENDPOINT, {
+    const res = await fetch(TOKEN_ENDPOINT, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({
         grant_type: 'refresh_token',
         refresh_token: refreshToken,
@@ -75,66 +57,64 @@ export async function refreshGrokToken(refreshToken: string, clientId?: string):
       }),
     });
 
-    if (!response.ok) {
-      const text = await response.text();
-      console.error('[pi-grok] Token refresh failed:', response.status, text);
+    if (!res.ok) {
+      console.error('[pi-grok] Refresh failed:', res.status, await res.text());
       return null;
     }
 
-    const data = await response.json();
-
+    const data = await res.json();
     return {
       accessToken: data.access_token,
       refreshToken: data.refresh_token || refreshToken,
       expiresAt: Date.now() + (data.expires_in || 21600) * 1000,
     };
   } catch (err) {
-    console.error('[pi-grok] Error during token refresh:', err);
+    console.error('[pi-grok] Refresh error:', err);
     return null;
   }
 }
 
 /**
- * Get a valid access token, refreshing if necessary.
- * This is the main function the provider will use.
+ * Main entry point used by the extension.
+ * Supports all three input methods requested by the user.
  */
-export async function getValidGrokAccessToken(config: GrokBuildProviderConfig): Promise<string | null> {
+export async function getValidGrokAccessToken(
+  config: GrokBuildProviderConfig = {}
+): Promise<string | null> {
   let tokens: GrokAuthTokens | null = null;
 
-  // Priority 1: Direct access token provided
+  // 1. Direct access token
   if (config.accessToken) {
-    // If they also gave a refresh token, we can use it for future refreshes
+    if (config.refreshToken) {
+      // We have both — still check expiration if possible, but for now just return it
+      return config.accessToken;
+    }
     return config.accessToken;
   }
 
-  // Priority 2: Full auth.json content provided
+  // 2. Full auth.json content passed in
   if (config.authJson) {
-    tokens = parseGrokAuthFile(config.authJson);
+    tokens = parseGrokAuthObject(
+      typeof config.authJson === 'string' ? JSON.parse(config.authJson) : config.authJson
+    );
   }
 
-  // Priority 3: Read from filesystem
+  // 3. Read from filesystem (default behavior)
   if (!tokens) {
     tokens = readGrokTokensFromFile(config.authFilePath);
   }
 
   if (!tokens) {
-    console.error('[pi-grok] No Grok authentication found. Provide accessToken, authJson, or ensure ~/.grok/auth.json exists.');
+    console.error('[pi-grok] No Grok authentication found.');
     return null;
   }
 
-  // Check if token is expired (with 5 minute buffer)
-  const now = Date.now();
+  // Auto-refresh if expired (5 min buffer)
   const buffer = 5 * 60 * 1000;
-
-  if (tokens.expiresAt - buffer < now) {
-    console.log('[pi-grok] Access token expired or expiring soon, refreshing...');
+  if (Date.now() + buffer > tokens.expiresAt) {
     const refreshed = await refreshGrokToken(tokens.refreshToken, config.clientId);
-
     if (refreshed) {
       tokens = refreshed;
-      // TODO: Optionally write back the new tokens to auth.json or a cache
-    } else {
-      console.error('[pi-grok] Failed to refresh token. Using potentially expired token.');
     }
   }
 
