@@ -1,0 +1,48 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write       # semantic-release tags, GitHub release, CHANGELOG commit
+  issues: write         # semantic-release commenting on released issues
+  pull-requests: write  # ditto for PRs
+  id-token: write       # OIDC: npm trusted publishing + provenance
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    # Skip when semantic-release's release commit triggers this workflow again.
+    if: "!contains(github.event.head_commit.message, 'chore(release):')"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          # semantic-release needs full history to analyze commits.
+          fetch-depth: 0
+          # Use the default GITHUB_TOKEN; permissions are scoped above.
+          persist-credentials: false
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: https://registry.npmjs.org
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # No NPM_TOKEN — npm trusted publishing uses the OIDC token from
+          # `id-token: write` above. Configure the trusted publisher on
+          # npmjs.com → @ai-ecoverse/pi-grok → Settings → Trusted Publisher.
+          NPM_CONFIG_PROVENANCE: "true"
+        run: npx semantic-release

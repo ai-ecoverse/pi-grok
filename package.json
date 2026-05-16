@@ -12,7 +12,9 @@
     "LICENSE"
   ],
   "pi": {
-    "extensions": ["./src/index.ts"]
+    "extensions": [
+      "./src/index.ts"
+    ]
   },
   "scripts": {
     "build": "tsc",
@@ -20,7 +22,15 @@
     "prepublishOnly": "rm -rf dist && tsc",
     "test": "echo \"No tests yet\""
   },
-  "keywords": ["pi", "grok", "xai", "ai", "extension", "provider", "grok-build"],
+  "keywords": [
+    "pi",
+    "grok",
+    "xai",
+    "ai",
+    "extension",
+    "provider",
+    "grok-build"
+  ],
   "author": "Lars Trieloff",
   "license": "Apache-2.0",
   "repository": {
@@ -35,15 +45,18 @@
     "access": "public"
   },
   "dependencies": {
-    "@earendil-works/pi-coding-agent": "^0.74.0",
-    "@earendil-works/pi-ai": "^0.74.0"
+    "@earendil-works/pi-ai": ">=0.74.0",
+    "@earendil-works/pi-coding-agent": ">=0.74.0"
   },
   "devDependencies": {
+    "@semantic-release/changelog": "6.0.3",
+    "@semantic-release/git": "10.0.1",
     "@types/node": "^22.0.0",
+    "semantic-release": "25.0.3",
     "typescript": "^5.4.0"
   },
   "peerDependencies": {
-    "@earendil-works/pi-coding-agent": ">=0.74.0",
-    "@earendil-works/pi-ai": ">=0.74.0"
+    "@earendil-works/pi-ai": ">=0.74.0",
+    "@earendil-works/pi-coding-agent": ">=0.74.0"
   }
 }
