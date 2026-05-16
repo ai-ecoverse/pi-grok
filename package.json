@@ -1,7 +1,8 @@
 {
   "name": "@ai-ecoverse/pi-grok",
   "version": "0.1.1",
-  "description": "Grok Build provider and extension for Pi Coding Agent — registers a `grok-build` model and routes auth through ~/.grok/auth.json (with refresh) or XAI_API_KEY.",
+  "description": "DEPRECATED — Grok Build provider for Pi Coding Agent. This package is no longer maintained. Please migrate to stnly/pi-grok: https://github.com/stnly/pi-grok",
+  "deprecated": "This package (@ai-ecoverse/pi-grok) is deprecated and will receive no further updates. Please migrate to the official stnly/pi-grok extension, which provides native OAuth login, live model discovery, and better xAI Responses API support: https://github.com/stnly/pi-grok",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -29,7 +30,8 @@
     "ai",
     "extension",
     "provider",
-    "grok-build"
+    "grok-build",
+    "deprecated"
   ],
   "author": "Lars Trieloff",
   "license": "Apache-2.0",
@@ -38,9 +40,9 @@
     "url": "git+https://github.com/ai-ecoverse/pi-grok.git"
   },
   "bugs": {
-    "url": "https://github.com/ai-ecoverse/pi-grok/issues"
+    "url": "https://github.com/stnly/pi-grok/issues"
   },
-  "homepage": "https://github.com/ai-ecoverse/pi-grok#readme",
+  "homepage": "https://github.com/stnly/pi-grok#readme",
   "publishConfig": {
     "access": "public"
   },
