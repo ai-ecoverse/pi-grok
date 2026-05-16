@@ -40,8 +40,23 @@ intervention.
 ## Installation
 
 ```bash
-# Load the extension
-pi -e ~/Developer/ai-ecoverse/pi-grok
+pi install npm:@ai-ecoverse/pi-grok
+```
+
+`pi install` is pi's built-in package manager — it fetches the
+extension from npm, registers it in your global `settings.json`, and
+loads it on the next pi run. Pass `-l` / `--local` to install it into
+the current project's `.pi/settings.json` instead.
+
+Other sources also work — e.g. `pi install git:github.com/ai-ecoverse/pi-grok`
+or `pi install ./path/to/local/checkout` for development. To remove
+it again: `pi remove npm:@ai-ecoverse/pi-grok`.
+
+If you'd rather not register it globally, you can still side-load on a
+single invocation:
+
+```bash
+pi -e npm:@ai-ecoverse/pi-grok
 ```
 
 ## Usage
