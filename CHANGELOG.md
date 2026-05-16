@@ -1,3 +1,10 @@
+## [0.1.2](https://github.com/ai-ecoverse/pi-grok/compare/v0.1.1...v0.1.2) (2026-05-16)
+
+
+### Bug Fixes
+
+* deprecate @ai-ecoverse/pi-grok in favor of stnly/pi-grok ([d6e9d49](https://github.com/ai-ecoverse/pi-grok/commit/d6e9d49bcd50f125be454ee9b98fe3e7f983a00b))
+
 ## [0.1.1](https://github.com/ai-ecoverse/pi-grok/compare/v0.1.0...v0.1.1) (2026-05-16)
 
 
