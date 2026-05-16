@@ -1,6 +1,6 @@
 {
   "name": "@ai-ecoverse/pi-grok",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Grok Build provider and extension for Pi Coding Agent — registers a `grok-build` model and routes auth through ~/.grok/auth.json (with refresh) or XAI_API_KEY.",
   "type": "module",
   "main": "dist/index.js",
